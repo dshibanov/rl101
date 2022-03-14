@@ -168,8 +168,8 @@ class GridWorld(Environment):
         self.terminal = terminal
         self.step_reward = step_reward
         self.actions = actions
-        self.board = np.zeros([size[0], size[1]])
-        self.board[terminal[0]][terminal[1]] = -1
+        self.board = np.zeros(size)
+        self.board[terminal] = -1
         self.setstate(start)
         self.R = 0
         self.steps = 0
