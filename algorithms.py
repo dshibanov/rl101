@@ -1,4 +1,0 @@
-# here shall be algorithms
-
-
-
