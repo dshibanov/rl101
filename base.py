@@ -10,7 +10,6 @@ class Environment(abc.ABC):
 
     @abc.abstractmethod
     def step(self, a, s=None):
-        # return s', r
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -144,14 +143,6 @@ class Easy21(Environment):
         return 0
 
 
-# TODO:
-#   - reimplement grid world like GridWorld(Environment)
-#   - implement random policy agent for GW
-#   - implement policy evaluation algorithm
-
-
-# from IPython.display import clear_output
-
 class GridWorld(Environment):
 
     def __init__(self,
@@ -167,9 +158,10 @@ class GridWorld(Environment):
         self.size = size
         self.terminal = terminal
         self.step_reward = step_reward
+        self.deterministic = deterministic
         self.actions = actions
         self.board = np.zeros(size)
-        self.board[terminal] = -1
+        self.board[terminal[0], terminal[1]] = -1
         self.setstate(start)
         self.R = 0
         self.steps = 0
@@ -183,8 +175,14 @@ class GridWorld(Environment):
         else:
             return False
 
+    def rows(self):
+        return self.size[0]
+    
+    def cols(self):
+        return self.size[1]
+    
     def dynamics(self, a, s=None):
-        #         # for general case return list of (s_, r, prob)
+        # for general case return list of (s_, r, prob)
         # for deterministic case return [(s_, r, p)]
 
         if s is not None:
@@ -216,19 +214,9 @@ class GridWorld(Environment):
         # some regular & edge cases
 
     def step(self, a='up', s=None):
-        #         print('#1')
         actions = self.dynamics(a, s)
-        #         print('#2')
-        #         print('actions: ', actions)
-        #         print(self._state)
-        # here choose action in general case
-        # with probability to be chosen proportionally to prob of a
-
-        # 1. get array of probs
         probs = [i[2] for i in actions]
         probs /= np.array([i[2] for i in actions]).sum()
-        #         print('#3')
-        # 2. need a function for choose proportionally to prob
         picked = np.random.choice(np.array(actions, dtype=np.dtype('2int, int, float')), 1, p=probs)
         _s, r, p = picked[0]
         self.last_action = a
@@ -241,13 +229,8 @@ class GridWorld(Environment):
             return self._state, self.step_reward
 
     def setstate(self, state):
-        #         if type(state) is not np.ndarray:
-        #             print('in setstate')
-        #             print('type(state) ', type(state))
-        # update board
         self.board[self._state[0]][self._state[1]] = 0
         self.board[state[0]][state[1]] = 1
-        # set state
         self._state = state
 
     def print(self):
@@ -291,7 +274,10 @@ class GridWorld(Environment):
         return result
 
     def restart(self):
-        self.__init__(self.start_state, self.actions)
+        self.__init__(self.start_state, self.actions, self.size,
+                 self.terminal,
+                 self.deterministic,
+                 self.step_reward)
         return -1
 
 
@@ -304,8 +290,4 @@ class RandomPolicy(Agent):
         return np.random.choice(self.env.actions)
 
     def pi(self, s):
-        # should agent choose between eligible actions
-        # look at gridworld description in Sutton's book
-        # Sutton p. 76, agent is able to choose any of 4 actions __equiprobably__
-        # so return list [(0.25, "up"), (0.25, "down"), (0.25, "left"), (0.25, "right")]
         return dict([("up", 0.25), ("down", 0.25), ("left", 0.25), ("right", 0.25)])
